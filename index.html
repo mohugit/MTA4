@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b5d6b">
+<title>Al-Maqaleh Taurodontism Analyzer</title>
+<style>
+:root{--bg:#f3f6f8;--card:#fff;--tx:#14212b;--mu:#5d6c7a;--bd:#d8e0e6;--ac:#0b6e7f;--ac2:#e8f4f6;--hd:#0b5d6b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1419;--card:#16202a;--tx:#e5edf3;--mu:#92a3b3;--bd:#27343f;--ac:#3cb5c8;--ac2:#14303a;--hd:#0a3f49}}
+:root[data-theme="dark"]{--bg:#0d1419;--card:#16202a;--tx:#e5edf3;--mu:#92a3b3;--bd:#27343f;--ac:#3cb5c8;--ac2:#14303a;--hd:#0a3f49}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--tx);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;
+padding-top:env(safe-area-inset-top,0px)}
+header{background:var(--hd);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 14px}
+.logo{width:34px;height:34px;border-radius:9px;background:#fff2;display:grid;place-items:center;font-size:20px}
+header b{font-size:15px;display:block;line-height:1.2}header small{opacity:.75;font-size:11px}
+nav{display:flex;gap:2px;margin-left:auto}
+nav button{background:none;border:0;color:#fff;opacity:.7;padding:8px 12px;border-radius:8px;font:inherit;font-weight:600;cursor:pointer}
+nav button.on{opacity:1;background:#fff2}
+main{flex:1;min-height:0;overflow:auto}
+.view{display:none;height:100%}.view.on{display:block}
+#v-an.on{display:grid;grid-template-columns:1fr 360px;gap:12px;padding:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+h3{margin:0 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mu)}
+#stage{position:relative;background:#05080a;border-radius:12px;overflow:hidden;height:calc(100vh - 120px);min-height:380px}
+canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.tb{position:absolute;left:8px;right:8px;bottom:8px;display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.tb button{flex:none}
+.hint{position:absolute;top:8px;left:8px;right:8px;background:#000a;color:#fff;border-radius:8px;padding:6px 10px;font-size:13px;pointer-events:none}
+button,input,select{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:8px 11px;min-height:38px}
+button{cursor:pointer;font-weight:600}button:active{transform:scale(.97)}
+button.p{background:var(--ac);border-color:var(--ac);color:#fff}
+.tb button{background:#111c;color:#fff;border-color:#fff3;backdrop-filter:blur(4px)}
+.tb button.on{background:var(--ac);border-color:var(--ac)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.m{background:var(--ac2);border-radius:10px;padding:8px;text-align:center}
+.m b{display:block;font-size:19px;font-variant-numeric:tabular-nums}.m span{font-size:11px;color:var(--mu)}
+#badge{border-radius:10px;padding:12px;text-align:center;font-weight:700;font-size:16px;margin:10px 0 6px;background:var(--bd);color:#111}
+.crit{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--bd)}
+.ok{color:#16a34a;font-weight:700}.no{color:#dc2626;font-weight:700}
+.small{font-size:12px;color:var(--mu)}
+input[type=range]{width:100%;padding:0;min-height:24px}
+.dots{display:flex;gap:6px;margin:6px 0}
+.dot{flex:1;height:6px;border-radius:3px;background:var(--bd)}.dot.d{background:var(--ac)}
+.page{max-width:900px;margin:0 auto;padding:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:7px 6px;border-bottom:1px solid var(--bd);text-align:left}
+th{color:var(--mu);font-size:11px;text-transform:uppercase}
+.tbl{overflow-x:auto}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.pill{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;color:#111}
+details summary{cursor:pointer;font-weight:600;padding:4px 0}
+footer{font-size:11px;color:var(--mu);text-align:center;padding:6px}
+#pop{position:absolute;z-index:5;left:8px;top:52px;width:min(290px,calc(100% - 16px));background:var(--card);border:2px solid var(--pc,var(--ac));border-radius:14px;box-shadow:0 10px 30px #0007;display:none;touch-action:none;color:var(--tx)}
+#pop.show{display:block;animation:pin .25s ease-out}
+@keyframes pin{from{opacity:0;scale:.9}to{opacity:1;scale:1}}
+#popH{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--pc,var(--ac));color:#111;border-radius:11px 11px 0 0;cursor:grab;user-select:none}
+#popH b{flex:1;font-size:14px}
+#popX{min-height:28px;padding:0 9px;background:#0002;border:0;color:#111;border-radius:8px}
+#pop .pb{padding:10px}#pop .m b{font-size:16px}
+.arch{display:grid;grid-template-columns:repeat(5,1fr) 8px repeat(5,1fr);gap:3px;margin:5px 0}
+.tt{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:52px;padding:4px 0;font-weight:700;font-size:14px;line-height:1.2}
+.tt i{font-style:normal;font-size:9px;font-weight:600;opacity:.8}
+.tt u{position:absolute;top:1px;right:4px;text-decoration:none;font-size:10px}
+.tt.cur{outline:3px solid var(--ac);outline-offset:1px}
+.pal{display:inline-block;min-width:1.15em;text-align:center;padding:0 .2em;line-height:1.15;border:0 solid currentColor}
+.pal.UR{border-width:0 2px 2px 0}.pal.UL{border-width:0 0 2px 2px}.pal.LR{border-width:2px 2px 0 0}.pal.LL{border-width:2px 0 0 2px}
+@media(max-width:860px){
+ #v-an.on{display:block;padding:8px}
+ #stage{height:56vh;min-height:320px;margin-bottom:8px}
+ .stats{grid-template-columns:repeat(2,1fr)}
+ header small{display:none}
+ nav button{padding:8px 9px;font-size:13px}
+ .card{margin-bottom:8px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🦷</div>
+  <div><b>Al-Maqaleh Taurodontism Analyzer</b><small>Morphometric V1 · V2 · V3 · Shifman &amp; Chanannel (1978)</small></div>
+  <nav>
+    <button data-v="an" class="on">Analyze</button>
+    <button data-v="ds">Dataset</button>
+    <button data-v="pr">Protocol</button>
+  </nav>
+</header>
+
+<main>
+<!-- ANALYZE -->
+<section class="view on" id="v-an">
+  <div id="stage">
+    <canvas id="cv"></canvas>
+    <div class="hint" id="hint">Import an X-ray to begin</div>
+    <div id="pop"><div id="popH"><span>⠿</span><b id="popT">–</b><button id="popX" aria-label="Close">✕</button></div>
+      <div class="pb"><div class="grid3"><div class="m"><b id="pv1">–</b><span>V1 mm</span></div><div class="m"><b id="pv2">–</b><span>V2 mm</span></div><div class="m"><b id="pv3">–</b><span>V3 mm</span></div></div>
+      <div class="small" id="popTI" style="margin-top:6px"></div><div class="small" id="popN"></div></div></div>
+    <div class="tb">
+      <button class="p" id="bLoad">📁 Import</button>
+      <button id="bMode">✚ Place</button>
+      <button id="bCal">📏 Calibrate</button>
+      <button id="bUndo">↶ Undo</button>
+      <button id="bFit">⤢ Fit</button>
+      <button id="bRes">🔔 Result</button>
+      <button id="bReset">⟲ Reset</button>
+      <input type="file" id="file" accept="image/*" hidden>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <h3>Measurements</h3>
+      <div class="dots" id="dots"></div>
+      <div class="grid3">
+        <div class="m"><b id="v1">–</b><span>V1 · A→B (mm)</span></div>
+        <div class="m"><b id="v2">–</b><span>V2 · A→Apex (mm)</span></div>
+        <div class="m"><b id="v3">–</b><span>V3 · CEJ→B (mm)</span></div>
+      </div>
+      <div class="m" style="margin-top:8px"><b id="ti">–</b><span>Taurodontic Index (V1 ÷ V2 × 100)</span></div>
+      <div id="badge">Place all 5 landmarks</div>
+      <div class="crit"><span>TI ≥ 20 %</span><span id="c1">–</span></div>
+      <div class="crit"><span>V3 ≥ 2.5 mm</span><span id="c2">–</span></div>
+      <div class="small" id="note" style="margin-top:6px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Tooth chart (Palmer) · tap a premolar or molar</h3>
+      <div id="chart"></div>
+      <div class="small">Colour = result · % = TI · ✓ = saved for this patient · n/5 = points placed. Palmer: UR/UL/LR/LL = quadrant, numbered from the midline (4–5 premolars, 6–8 molars).</div>
+      <h3 style="margin-top:14px">Save to dataset</h3>
+      <div class="row">
+        <input id="pid" placeholder="Patient ID" style="flex:1;min-width:110px">
+        
+        <select id="sex"><option>F</option><option>M</option></select>
+        <input id="age" type="number" placeholder="Age" style="width:70px" inputmode="numeric">
+      </div>
+      <div class="row"><button class="p" id="bSave" style="flex:1">＋ Save tooth</button><button id="bAll" style="flex:1">＋ Save all</button></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary>Calibration &amp; image settings</summary>
+        <div class="row">Scale <input id="mpp" type="number" step="0.001" value="0.100" style="width:95px" inputmode="decimal"> mm/px</div>
+        <div class="row">Known length <input id="calmm" type="number" value="10" step="0.1" style="width:80px" inputmode="decimal"> mm
+          <span class="small">then tap 📏 and click both ends</span></div>
+        <div class="small">Brightness</div><input type="range" id="br" min="50" max="180" value="100">
+        <div class="small">Contrast</div><input type="range" id="ct" min="50" max="220" value="100">
+        <label><input type="checkbox" id="inv"> Invert image</label>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- DATASET -->
+<section class="view" id="v-ds"><div class="page">
+  <div class="stats">
+    <div class="m"><b id="sN">0</b><span>Teeth measured</span></div>
+    <div class="m"><b id="sT">0</b><span>Taurodontic</span></div>
+    <div class="m"><b id="sP">–</b><span>Tooth-level prevalence</span></div>
+    <div class="m"><b id="sM">–</b><span>Mean TI</span></div>
+    <div class="m"><b id="sPt">0</b><span>Patients</span></div>
+    <div class="m"><b id="sPP">–</b><span>Patient-level prevalence</span></div>
+  </div>
+  <div class="card">
+    <div class="row"><button class="p" id="bCsv">⬇ Export CSV</button><button id="bClr">Clear all</button>
+      <span class="small">Stored on this device only.</span></div>
+    <div class="tbl"><table><thead><tr><th>Patient</th><th>Tooth (Palmer)</th><th>Sex/Age</th><th>V1</th><th>V2</th><th>V3</th><th>TI %</th><th>Class</th><th></th></tr></thead>
+    <tbody id="rows"></tbody></table></div>
+  </div>
+</div></section>
+
+<!-- PROTOCOL -->
+<section class="view" id="v-pr"><div class="page">
+  <div class="card"><h3>How to measure</h3>
+    <ol>
+      <li>Import the radiograph and calibrate using a known length (or enter mm/pixel).</li>
+      <li>Mark, in order: <b>mesial CEJ</b>, <b>distal CEJ</b>, <b>Point A</b> (lowest point of the chamber roof), <b>Point B</b> (highest point of the chamber floor), and the <b>radiographic apex</b> of the longest root.</li>
+      <li>On touch screens, press and hold: a magnifier appears above your finger. Slide to the exact spot and release. Drag any point later to refine it.</li>
+      <li><b>Keyboard:</b> hold <b>Space</b> and drag to move the image (hand tool). Click a point to select it, then use the arrow keys to nudge it (Shift = ×10). Delete removes the selected point.</li>
+      <li>The final type appears in a pop-up on the image. Drag its title bar to move it, ✕ to close it, or 🔔 Result to bring it back.</li>
+      <li><b>Multiple teeth:</b> enter the Patient ID, tap a premolar or molar on the Palmer tooth chart (numbered from the midline: 4–5 premolars, 6–8 molars) and mark its 5 landmarks. Tap another tooth and repeat. Each tooth keeps its own points on the same image, and the chart shows each result at a glance. Save one tooth or all measured teeth at once; saving again updates the record instead of duplicating it.</li>
+      <li>Check the classification, then save it to the dataset.</li>
+    </ol></div>
+  <div class="card"><h3>Definitions</h3>
+    <p><b>V1</b>: Point A to Point B (pulp chamber height).<br><b>V2</b>: Point A to the apex of the longest root.<br><b>V3</b>: perpendicular distance from Point B to the line joining the mesial and distal CEJ.<br><b>TI</b> = (V1 ÷ V2) × 100.</p>
+    <p>A tooth is taurodontic only if <b>TI ≥ 20 %</b> and <b>V3 ≥ 2.5 mm</b>. Hypotaurodontism: 20–29.9 %. Mesotaurodontism: 30–39.9 %. Hypertaurodontism: ≥ 40 %.</p>
+    <p class="small">Reference: Shifman A, Chanannel I. Community Dent Oral Epidemiol. 1978;6(4):200–203.</p></div>
+  <div class="card" style="text-align:center"><h3>About</h3>
+    <p style="margin:4px 0"><b>Al-Maqaleh Taurodontism Analyzer</b></p>
+    <p style="margin:4px 0">Prepared by <b>Eng. Yousuf Al-Maqaleh</b></p>
+    <p style="margin:4px 0;font-size:16px" dir="rtl" lang="ar">إعداد: <b>المهندس/ يوسف المقالح</b></p></div>
+  <div class="card"><h3>Notes</h3>
+    <p class="small">Research tool for measurement support; it does not replace clinical judgement. Panoramic images have unequal horizontal and vertical magnification, so calibrate near the measured tooth. Images are processed in your browser and are never uploaded.</p></div>
+</div></section>
+</main>
+<footer>Al-Maqaleh Taurodontism Analyzer · v1.0<br>Prepared by Eng. Yousuf Al-Maqaleh &nbsp;·&nbsp; <span dir="rtl" lang="ar">إعداد: المهندس/ يوسف المقالح</span></footer>
+
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const FDI=['16','17','18','26','27','28','36','37','38','46','47','48'];
+const STEPS=[
+ {k:'cejM',s:'CEJ-M',t:'mesial CEJ',c:'#38bdf8'},{k:'cejD',s:'CEJ-D',t:'distal CEJ',c:'#0ea5e9'},
+ {k:'A',s:'A',t:'Point A: lowest point of chamber roof',c:'#a855f7'},
+ {k:'B',s:'B',t:'Point B: highest point of chamber floor',c:'#f59e0b'},
+ {k:'apex',s:'Apex',t:'root apex (longest root)',c:'#22c55e'}];
+const CLS={n:['Normal (Cynodont)','#34d399'],h:['Hypotaurodontism (mild)','#fbbf24'],m:['Mesotaurodontism (moderate)','#fb923c'],x:['Hypertaurodontism (severe)','#fb7185']};
+
+// ---------- engine ----------
+function evaluate(v1,v2,v3){
+  const ti=v1/v2*100,c1=ti>=20,c2=v3>=2.5;let k='n',note='';
+  if(c1&&c2)k=ti<30?'h':ti<40?'m':'x';
+  else if(c1)note='TI ≥ 20 % but V3 < 2.5 mm: classified as cynodont.';
+  else if(c2)note='V3 ≥ 2.5 mm but TI < 20 %: classified as cynodont.';
+  if(v1>=v2)note='Check landmarks: V1 must be smaller than V2.';
+  return {ti,c1,c2,k,cat:CLS[k][0],col:CLS[k][1],note};
+}
+
+// ---------- state ----------
+const cv=$('cv'),ctx=cv.getContext('2d');
+let img=null,P={},zoom=1,pan={x:0,y:0},mode='place',calOn=false,calPts=[];
+let ptrs=new Map(),drag=null,pinch=null,loupe=null,history=[];
+let sel=null,spaceDown=false,popClosed=false,lastKey=null;
+let teeth={},curT='47';
+const UP=['18','17','16','15','14','24','25','26','27','28'],LO=['48','47','46','45','44','34','35','36','37','38'];
+const QN={1:'UR',2:'UL',3:'LL',4:'LR'};   // Palmer quadrants (FDI 1x/2x/3x/4x are kept internally)
+const pal=f=>QN[f[0]]+f[1];
+const palH=f=>`<span class="pal ${QN[f[0]]}">${f[1]}</span>`;
+let rec=[];try{rec=JSON.parse(localStorage.getItem('amta_records')||'[]')}catch(e){rec=[]}
+const store=()=>{try{localStorage.setItem('amta_records',JSON.stringify(rec))}catch(e){}};
+
+
+// ---------- geometry ----------
+const mpp=()=>parseFloat($('mpp').value)||0.1;
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const toImg=s=>({x:(s.x-pan.x)/zoom,y:(s.y-pan.y)/zoom});
+const toScr=p=>({x:p.x*zoom+pan.x,y:p.y*zoom+pan.y});
+function foot(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,t=((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1);return {x:a.x+t*dx,y:a.y+t*dy}}
+function measure(Q=P){
+  if(!STEPS.every(s=>Q[s.k]))return null;
+  const s=mpp(),v1=dist(Q.A,Q.B)*s,v2=dist(Q.A,Q.apex)*s,v3=dist(Q.B,foot(Q.B,Q.cejM,Q.cejD))*s;
+  return {v1,v2,v3,...evaluate(v1,v2,v3)};
+}
+const next=()=>STEPS.findIndex(s=>!P[s.k]);
+
+// ---------- canvas ----------
+function resize(){const r=cv.getBoundingClientRect(),d=devicePixelRatio||1;cv.width=r.width*d;cv.height=r.height*d;draw()}
+addEventListener('resize',()=>{resize();});
+function fit(){if(!img)return;const w=cv.clientWidth,h=cv.clientHeight;zoom=Math.min(w/img.width,h/img.height);pan={x:(w-img.width*zoom)/2,y:(h-img.height*zoom)/2}}
+function seg(a,b,c,dash,w){if(!a||!b)return;const p=toScr(a),q=toScr(b);ctx.beginPath();ctx.setLineDash(dash||[]);ctx.strokeStyle=c;ctx.lineWidth=w||2;ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);ctx.stroke();ctx.setLineDash([])}
+function scene(){
+  seg(P.cejM,P.cejD,'#38bdf8',[6,4]);seg(P.A,P.B,'#f59e0b');seg(P.A,P.apex,'#a855f7',[2,4]);
+  if(P.B&&P.cejM&&P.cejD)seg(P.B,foot(P.B,P.cejM,P.cejD),'#0ea5e9');
+  for(const s of STEPS){const p=P[s.k];if(!p)continue;const q=toScr(p);
+    ctx.beginPath();ctx.arc(q.x,q.y,13,0,7);ctx.strokeStyle=s.k===sel?'#fff':'rgba(255,255,255,.3)';ctx.lineWidth=s.k===sel?2:1;ctx.stroke();
+    ctx.beginPath();ctx.arc(q.x,q.y,s.k===sel?8:6,0,7);ctx.fillStyle=s.c;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='600 12px system-ui';ctx.textAlign='left';ctx.shadowColor='#000';ctx.shadowBlur=3;ctx.fillText(s.s,q.x+10,q.y-8);ctx.shadowBlur=0}
+  calPts.forEach(c=>{const q=toScr(c);ctx.beginPath();ctx.arc(q.x,q.y,5,0,7);ctx.fillStyle='#ef4444';ctx.fill()});
+  if(calPts.length===2)seg(calPts[0],calPts[1],'#ef4444');
+}
+function draw(){
+  const d=devicePixelRatio||1;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,cv.clientWidth,cv.clientHeight);
+  if(!img)return;
+  ctx.save();ctx.filter=`brightness(${$('br').value}%) contrast(${$('ct').value}%)${$('inv').checked?' invert(1)':''}`;
+  ctx.drawImage(img,pan.x,pan.y,img.width*zoom,img.height*zoom);ctx.restore();
+  scene();
+  if(loupe){ // magnifier above the finger
+    const R=58,z=3.2,lx=Math.min(Math.max(loupe.x,R+6),cv.clientWidth-R-6);let ly=loupe.y-R-46;if(ly<R+6)ly=loupe.y+R+46;
+    ctx.save();ctx.beginPath();ctx.arc(lx,ly,R,0,7);ctx.clip();ctx.fillStyle='#000';ctx.fillRect(lx-R,ly-R,2*R,2*R);
+    ctx.filter=ctx.filter;ctx.translate(lx,ly);ctx.scale(z,z);ctx.translate(-loupe.x,-loupe.y);
+    ctx.filter=`brightness(${$('br').value}%) contrast(${$('ct').value}%)${$('inv').checked?' invert(1)':''}`;
+    ctx.drawImage(img,pan.x,pan.y,img.width*zoom,img.height*zoom);ctx.restore();
+    ctx.beginPath();ctx.arc(lx,ly,R,0,7);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    ctx.strokeStyle='#ef4444';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(lx-14,ly);ctx.lineTo(lx+14,ly);ctx.moveTo(lx,ly-14);ctx.lineTo(lx,ly+14);ctx.stroke();
+  }
+}
+
+// ---------- UI refresh ----------
+function ui(){
+  teeth[curT]=P;const n=next(),m=measure();chart();
+  $('bSave').textContent='＋ Save tooth '+pal(curT);$('bAll').textContent='＋ Save all ('+Object.values(teeth).filter(q=>measure(q)).length+')';
+  $('dots').innerHTML=STEPS.map(s=>`<div class="dot ${P[s.k]?'d':''}"></div>`).join('');
+  $('hint').textContent=!img?'Import an X-ray to begin':calOn?'Calibration: tap both ends of a known length':
+    spaceDown?'✋ Space held: drag to move the image':mode==='pan'?'Pan / zoom mode (switch back to ✚ Place)':n>=0?`Tooth ${pal(curT)} · Step ${n+1}/5: tap ${STEPS[n].t}`:`Tooth ${pal(curT)} done. Drag points to refine, or pick the next tooth.`;
+  ['v1','v2','v3'].forEach(k=>$(k).textContent=m?m[k].toFixed(2):'–');
+  $('ti').textContent=m?m.ti.toFixed(1)+' %':'–';
+  const b=$('badge');b.textContent=m?m.cat:'Place all 5 landmarks';b.style.background=m?m.col:'var(--bd)';
+  const yn=(v,el)=>{el.textContent=m?(v?'✓ met':'✗ not met'):'–';el.className=m?(v?'ok':'no'):''};
+  yn(m&&m.c1,$('c1'));yn(m&&m.c2,$('c2'));$('note').textContent=m?m.note:'';
+  popUpdate(m);
+  $('bMode').textContent=mode==='place'?'✚ Place':'✋ Pan';$('bMode').classList.toggle('on',mode==='pan');
+  $('bCal').classList.toggle('on',calOn);
+  table();draw();
+}
+function table(){
+  $('rows').innerHTML=rec.map((r,i)=>`<tr><td>${esc(r.pid)}</td><td>${palH(r.fdi)} <span class="small">(${r.fdi})</span></td><td>${r.sex}${r.age?'/'+r.age:''}</td><td>${r.v1}</td><td>${r.v2}</td><td>${r.v3}</td><td>${r.ti}</td>
+    <td><span class="pill" style="background:${CLS[r.k][1]}">${CLS[r.k][0].split(' (')[0]}</span></td><td><button data-del="${i}" style="min-height:28px;padding:2px 8px">✕</button></td></tr>`).join('')||'<tr><td colspan="9" class="small">No measurements yet.</td></tr>';
+  const t=rec.filter(r=>r.k!=='n').length;
+  const ps=new Set(rec.map(r=>r.pid)),pt=new Set(rec.filter(r=>r.k!=='n').map(r=>r.pid));
+  $('sPt').textContent=ps.size;$('sPP').textContent=ps.size?(pt.size/ps.size*100).toFixed(1)+' %':'–';
+  $('sN').textContent=rec.length;$('sT').textContent=t;
+  $('sP').textContent=rec.length?(t/rec.length*100).toFixed(1)+' %':'–';
+  $('sM').textContent=rec.length?(rec.reduce((a,r)=>a+ +r.ti,0)/rec.length).toFixed(1)+' %':'–';
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// ---------- pointer interaction (mouse, pen, touch) ----------
+const pos=e=>{const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top}};
+function hit(s){let best=null,bd=22;for(const k in P){const d=dist(toScr(P[k]),s);if(d<bd){bd=d;best=k}}return best}
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{
+  if(!img)return;cv.setPointerCapture(e.pointerId);const s=pos(e);ptrs.set(e.pointerId,s);
+  if(ptrs.size===2){drag=null;loupe=null;const [a,b]=[...ptrs.values()];pinch={d:dist(a,b),z:zoom,c:{x:(a.x+b.x)/2,y:(a.y+b.y)/2},p:{...pan}};return}
+  if(e.button===1||e.button===2||mode==='pan'||spaceDown){drag={pan:true,last:s};cv.style.cursor='grabbing';return}
+  if(calOn){calPts.push(toImg(s));if(calPts.length===2){const px=dist(calPts[0],calPts[1]),mm=parseFloat($('calmm').value);
+      if(px>0&&mm>0)$('mpp').value=(mm/px).toFixed(4);calOn=false;calPts=[]}ui();return}
+  const h=hit(s);
+  if(h){history.push(JSON.stringify(P));drag={k:h};sel=h}
+  else{const n=next();if(n>=0){history.push(JSON.stringify(P));P[STEPS[n].k]=toImg(s);drag={k:STEPS[n].k};sel=STEPS[n].k}else drag={pan:true,last:s}}
+  if(drag.k&&e.pointerType!=='mouse')loupe=s;ui();
+});
+cv.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)){if(img&&e.pointerType==='mouse')cv.style.cursor=(spaceDown||mode==='pan')?'grab':hit(pos(e))?'move':'crosshair';return}
+  const s=pos(e);ptrs.set(e.pointerId,s);
+  if(pinch&&ptrs.size>=2){const [a,b]=[...ptrs.values()],c={x:(a.x+b.x)/2,y:(a.y+b.y)/2},nz=Math.max(.05,Math.min(40,pinch.z*dist(a,b)/pinch.d));
+    const bi={x:(pinch.c.x-pinch.p.x)/pinch.z,y:(pinch.c.y-pinch.p.y)/pinch.z};zoom=nz;pan={x:c.x-bi.x*nz,y:c.y-bi.y*nz};draw();return}
+  if(!drag)return;
+  if(drag.pan){pan.x+=s.x-drag.last.x;pan.y+=s.y-drag.last.y;drag.last=s;draw();return}
+  P[drag.k]=toImg(s);if(loupe)loupe=s;ui();
+});
+const end=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size){drag=null;if(loupe){loupe=null;ui()}}};
+cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);
+cv.addEventListener('wheel',e=>{e.preventDefault();if(!img)return;const s=pos(e),b=toImg(s);
+  zoom=Math.max(.05,Math.min(40,zoom*(e.deltaY<0?1.12:1/1.12)));pan={x:s.x-b.x*zoom,y:s.y-b.y*zoom};draw()},{passive:false});
+
+// ---------- keyboard: Space = hand tool, arrows = nudge selected point ----------
+addEventListener('keydown',e=>{
+  const t=e.target.tagName||'';if(/INPUT|SELECT|TEXTAREA/.test(t))return;
+  if(e.code==='Space'){e.preventDefault();if(t==='BUTTON')e.target.blur();if(!spaceDown){spaceDown=true;cv.style.cursor='grab';ui()}return}
+  if(!sel||!P[sel])return;
+  const d={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key];
+  if(d){e.preventDefault();const st=(e.shiftKey?10:1)/zoom;P[sel]={x:P[sel].x+d[0]*st,y:P[sel].y+d[1]*st};ui()}
+  else if(e.key==='Delete'||e.key==='Backspace'){history.push(JSON.stringify(P));delete P[sel];sel=null;ui()}
+});
+addEventListener('keyup',e=>{if(e.code==='Space'){spaceDown=false;cv.style.cursor='';ui()}});
+addEventListener('blur',()=>{spaceDown=false;cv.style.cursor=''});
+
+// ---------- result pop-up (draggable) ----------
+function popUpdate(m){
+  const p=$('pop');
+  if(!m){p.classList.remove('show');lastKey=null;popClosed=false;return}
+  const key=curT+m.k;if(lastKey!==key){popClosed=false;if(lastKey&&lastKey.startsWith(curT)&&navigator.vibrate){try{navigator.vibrate(40)}catch(x){}}lastKey=key}
+  p.style.setProperty('--pc',m.col);$('popT').textContent=pal(curT)+' · '+m.cat;
+  $('pv1').textContent=m.v1.toFixed(2);$('pv2').textContent=m.v2.toFixed(2);$('pv3').textContent=m.v3.toFixed(2);
+  $('popTI').textContent='TI '+m.ti.toFixed(1)+' %  ·  TI ≥ 20 %: '+(m.c1?'yes':'no')+'  ·  V3 ≥ 2.5 mm: '+(m.c2?'yes':'no');
+  $('popN').textContent=m.note;
+  p.classList.toggle('show',!popClosed);
+  if(!popClosed&&!p.dataset.placed){p.style.left=Math.max(8,($('stage').clientWidth-p.offsetWidth)/2)+'px';p.style.top='52px';p.dataset.placed='1'}
+}
+let pd=null;const popH=$('popH');
+popH.addEventListener('pointerdown',e=>{if(e.target.id==='popX')return;const r=$('stage').getBoundingClientRect(),p=$('pop');
+  pd={dx:e.clientX-r.left-p.offsetLeft,dy:e.clientY-r.top-p.offsetTop};popH.setPointerCapture(e.pointerId);popH.style.cursor='grabbing'});
+popH.addEventListener('pointermove',e=>{if(!pd)return;const st=$('stage'),r=st.getBoundingClientRect(),p=$('pop');
+  p.style.left=Math.max(0,Math.min(st.clientWidth-p.offsetWidth,e.clientX-r.left-pd.dx))+'px';
+  p.style.top=Math.max(0,Math.min(st.clientHeight-p.offsetHeight,e.clientY-r.top-pd.dy))+'px'});
+const popEnd=()=>{pd=null;popH.style.cursor='grab'};
+popH.addEventListener('pointerup',popEnd);popH.addEventListener('pointercancel',popEnd);
+$('popX').onclick=()=>{popClosed=true;$('pop').classList.remove('show')};
+$('bRes').onclick=()=>{popClosed=false;ui()};
+
+// ---------- tooth chart & multi-tooth records ----------
+function chart(){
+  const id=$('pid').value.trim();
+  const btn=f=>{const Q=teeth[f]||{},m=measure(Q),n=STEPS.filter(s=>Q[s.k]).length,sv=id&&rec.some(r=>r.pid===id&&r.fdi===f);
+    return `<button class="tt${f===curT?' cur':''}" data-t="${f}" title="${pal(f)} (FDI ${f})"${m?` style="background:${CLS[m.k][1]};color:#111"`:''}>${palH(f)}<i>${m?m.ti.toFixed(0)+'%':n?n+'/5':'·'}</i>${sv?'<u>✓</u>':''}</button>`};
+  const arch=a=>a.slice(0,5).map(btn).join('')+'<span></span>'+a.slice(5).map(btn).join('');
+  $('chart').innerHTML=`<div class="small" style="display:flex;justify-content:space-between"><span>Patient right</span><span>Patient left</span></div><div class="arch">${arch(UP)}</div><div class="arch">${arch(LO)}</div>`;
+}
+function selectTooth(f){teeth[curT]=P;curT=f;P=teeth[f]||(teeth[f]={});history=[];sel=null;ui()}
+$('chart').onclick=e=>{const b=e.target.closest('[data-t]');if(b)selectTooth(b.dataset.t)};
+$('pid').addEventListener('input',ui);
+function upsert(f,m,id){
+  const o={pid:id,fdi:f,sex:$('sex').value,age:$('age').value,v1:m.v1.toFixed(2),v2:m.v2.toFixed(2),v3:m.v3.toFixed(2),ti:m.ti.toFixed(1),k:m.k};
+  const i=rec.findIndex(r=>r.pid===id&&r.fdi===f);if(i>=0)rec[i]=o;else rec.push(o);
+}
+function flash(b,t){b.textContent=t;setTimeout(ui,1300)}
+
+// ---------- controls ----------
+$('bLoad').onclick=()=>$('file').click();
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const im=new Image();
+  im.onload=()=>{img=im;P={};teeth={};history=[];calPts=[];calOn=false;fit();ui()};im.onerror=()=>alert('Could not open this image. Use PNG, JPG or BMP.');im.src=URL.createObjectURL(f);e.target.value=''};
+$('bMode').onclick=()=>{mode=mode==='place'?'pan':'place';ui()};
+$('bCal').onclick=()=>{calOn=!calOn;calPts=[];ui()};
+$('bUndo').onclick=()=>{if(history.length){P=JSON.parse(history.pop());ui()}};
+$('bFit').onclick=()=>{fit();draw()};
+$('bReset').onclick=()=>{history.push(JSON.stringify(P));P={};ui()};
+['br','ct','inv','mpp'].forEach(id=>$(id).addEventListener('input',ui));
+$('bSave').onclick=()=>{const id=$('pid').value.trim(),m=measure();
+  if(!id){alert('Enter a Patient ID first.');return}
+  if(!m){alert('Place all 5 landmarks on tooth '+pal(curT)+' first.');return}
+  upsert(curT,m,id);store();ui();flash($('bSave'),'✓ Tooth '+pal(curT)+' saved')};
+$('bAll').onclick=()=>{const id=$('pid').value.trim();
+  if(!id){alert('Enter a Patient ID first.');return}
+  let n=0;for(const f in teeth){const m=measure(teeth[f]);if(m){upsert(f,m,id);n++}}
+  if(!n){alert('No tooth has all 5 landmarks yet.');return}
+  store();ui();flash($('bAll'),'✓ '+n+' teeth saved')};
+$('rows').onclick=e=>{const i=e.target.dataset.del;if(i!==undefined){rec.splice(+i,1);store();table()}};
+$('bClr').onclick=()=>{if(rec.length&&confirm('Delete all saved measurements?')){rec=[];store();table()}};
+$('bCsv').onclick=()=>{const q=v=>'"'+String(v).replace(/"/g,'""')+'"';
+  const rows=['patient,palmer,fdi,sex,age,V1_mm,V2_mm,V3_mm,TI_pct,classification',...rec.map(r=>[q(r.pid),pal(r.fdi),r.fdi,r.sex,r.age,r.v1,r.v2,r.v3,r.ti,q(CLS[r.k][0])].join(','))];
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+rows.join('\n')],{type:'text/csv'}));a.download='AlMaqaleh_taurodontism_results.csv';a.click()};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+b.dataset.v));
+  if(b.dataset.v==='an')setTimeout(()=>{resize();if(img&&!ptrs.size)draw()},0)});
+resize();ui();
+})();
+</script>
+</body>
+</html>
